@@ -2,9 +2,17 @@
 #include <iostream>
 using namespace std;
 
-class MarketPlace;
-
+class MarketPlace;//Forward Declaration
 class Seller;
+
+/* I have used default and paramerterized constructor in every class to ensure if user
+does not give info about that class then it will not intialize with garbage values and
+if user gives the correct info, it will directly assign to the object attribute.*/
+
+
+
+
+//---------------Location Class------------------
 class Location
 {
 private:
@@ -15,7 +23,8 @@ private:
     int zipcode;
 
 public:
-    Location()
+	
+    Location()   //Default constructor initializes objects with safe default values.
     {
         city = "Unknown";
         area = "Unknown";
@@ -23,6 +32,7 @@ public:
         country = "Unknown";
         zipcode = 0;
     }
+    //Parameterized constructor ensures object is created with valid data.
     Location(string country, string province, string city, string area, int zipcode)
     {
         this->country = country;
@@ -126,6 +136,7 @@ public:
         return false;
     }
 };
+//--------------------Engine Class------------------
 class Engine
 {
 private:
@@ -136,13 +147,14 @@ private:
     string engineType;
 
 public:
-    Engine() : engineNumber("0000")
+    Engine() : engineNumber("0000") //Default constructor initializes objects with safe default values.
     {
         horsepower = 0;
         torque = 0;
         capacity = 0;
         engineType = "Petrol";
     }
+     //Parameterized constructor ensures object is created with valid data.
     Engine(string Enumber, int hp, int torque, int Ecap, string type) : engineNumber(Enumber)
     {
         horsepower = hp;
@@ -193,6 +205,7 @@ public:
         cout << "-----------------------------" << endl;
     }
 };
+//-----------------------Car Class------------------------------
 class Car
 {
 private:
@@ -207,7 +220,7 @@ private:
     bool PremiumCategory;
 
 public:
-    Car() : engine(), location()
+    Car() : engine(), location() //Default constructor initializes objects with safe default values.
     {
         brand = "";
         model = "";
@@ -217,6 +230,7 @@ public:
 
         PremiumCategory = false;
     }
+     //Parameterized constructor ensures object is created with valid data.
     Car(string brand, string model, int year, double price, float mileage, string transmission, Engine e, Location loc) : engine(e)
     {
 
@@ -229,7 +243,8 @@ public:
         this->transmission = transmission;
         PremiumCategory = false;
     }
-
+     /*Copy constructor ensures correct duplication of objects and prevents
+	  shallow copy issues when objects contain pointers or composed objects.*/
     Car(const Car &car) : engine(car.engine)
     {
         brand = car.brand;
@@ -305,6 +320,7 @@ public:
         }
     }
 };
+//------------------------------User Class-------------------------
 class User
 {
 private:
@@ -315,7 +331,7 @@ private:
     string city;
 
 public:
-    User()
+    User() //Default constructor initializes objects with safe default values.
     {
         userID = 0;
         name = "Unknown";
@@ -323,6 +339,7 @@ public:
         phone = "0000-000000";
         city = "Unknown";
     }
+     //Parameterized constructor ensures object is created with valid data.
     User(int id, string name, string email, string phone, string city)
     {
         userID = id;
@@ -413,6 +430,7 @@ public:
         }
     }
 };
+//---------------------------Message Class---------------------
 class Message
 {
 private:
@@ -424,7 +442,7 @@ private:
     static int totalmessages;
 
 public:
-    Message() : messageId(0)
+    Message() : messageId(0) //Default constructor initializes objects with safe default values.
     {
 
         senderId = 0;
@@ -432,6 +450,7 @@ public:
         message = "N/A";
         isread = false;
     }
+     //Parameterized constructor ensures object is created with valid data.
     Message(int sid, int rid, string text) : messageId(++totalmessages)
     {
 
@@ -469,6 +488,7 @@ public:
 };
 
 int Message::totalmessages = 0;
+//---------------Listing Class-------------------
 class Listing
 {
     const int listingId;
@@ -480,13 +500,14 @@ class Listing
     const int platformfee;
 
 public:
-    Listing() : listingId(00), car(), platformfee(0.04)
+    Listing() : listingId(00), car(), platformfee(0.04) //Default constructor initializes objects with safe default values.
     {
         seller = nullptr;
         askingPrice = 0.0;
         status = "N/A";
         postdate = "N/A";
     }
+     //Parameterized constructor ensures object is created with valid data.
     Listing(int id, Car c, Seller *s, double price) : listingId(id), platformfee(0.04), car(c), seller(s)
     {
 
@@ -541,6 +562,7 @@ public:
         postdate = pd;
     }
 };
+//------------------Seller Class---------------------
 class Seller
 {
 private:
@@ -553,7 +575,7 @@ private:
     static int totalSeller;
 
 public:
-    Seller()
+    Seller() //Default constructor initializes objects with safe default values.
     {
         total_listing = 0;
         showroomName = "Unknown";
@@ -565,6 +587,7 @@ public:
             listings[i] = nullptr;
         }
     }
+     //Parameterized constructor ensures object is created with valid data.
     Seller(User u, string showroomName)
     {
         user = u;
@@ -682,7 +705,7 @@ public:
     }
 };
 int Seller::totalSeller = 0;
-
+//-----------------Buyer Class-------------------
 class Buyer
 {
 private:
@@ -693,7 +716,7 @@ private:
     double budget;
 
 public:
-    Buyer()
+    Buyer() //Default constructor initializes objects with safe default values.
     {
         favouriteCount = 0;
         budget = 0;
@@ -703,6 +726,7 @@ public:
             favourites[i] = nullptr;
         }
     }
+     //Parameterized constructor ensures object is created with valid data.
 
     Buyer(User u, double Budget, string preferedbrand)
     {
@@ -783,7 +807,7 @@ public:
         return user.getUserId();
     }
 };
-
+//-----------------Admin Class---------------------
 class Admin
 {
 private:
@@ -795,12 +819,13 @@ private:
     static int totalAdmins;
 
 public:
-    Admin() : adminid(++totalAdmins)
+    Admin() : adminid(++totalAdmins) //Default constructor initializes objects with safe default values.
     {
         approvedCount = 0;
         removeCount = 0;
         adminlevel = 1;
     }
+     //Parameterized constructor ensures object is created with valid data.
     Admin(User u, int level) : adminid(++totalAdmins)
     {
         adminlevel = level;
@@ -853,7 +878,7 @@ public:
     }
 };
 int Admin::totalAdmins = 0;
-
+//-------------------MarketPlace Class-----------------
 class MarketPlace
 {
 private:
@@ -865,7 +890,7 @@ private:
     static int totalMessages;
 
 public:
-    MarketPlace() : messages()
+    MarketPlace() : messages() //Default constructor initializes objects with safe default values.
     {
         for (int i = 0; i < 100; i++)
         {
@@ -1029,6 +1054,9 @@ public:
 int MarketPlace::totalUsers = 0;
 int MarketPlace::totalListings = 0;
 int MarketPlace::totalMessages = 0;
+
+// Defination of Some Functions because they were causing errors
+
 void Listing::displayListing() const
 {
     cout << "ID: " << getListingid() << endl;
@@ -1055,8 +1083,10 @@ void Seller::addlisting(int id, Car c, double price, MarketPlace *mp)
 }
 void Buyer::sendMessage(MarketPlace *marketplace)
 {
+	
     int rid;
     string text;
+    cout<<"\n-------Message--------\n";
     cout << "Enter Reciever Id: ";
     cin >> rid;
 
@@ -1068,6 +1098,7 @@ void Buyer::sendMessage(MarketPlace *marketplace)
     marketplace->addMessage(m);
     cout << "Message Sent Successfully\n";
 }
+// -------------Main----------------
 
 int main()
 {
@@ -1098,7 +1129,7 @@ int main()
         PakWheels.addListing(newListing);
     }
 
-    PakWheels.displayAllListings();
+  
 
     Buyer b1(*u2, 5000000, "Toyota");
 
@@ -1116,9 +1147,17 @@ int main()
 
     admin1.generateReport();
    	s1.updateSellerProfile();
-    s1.displaySellerListings();
+   
     s1.setRating(2.3);
+   
+     
+     
+    Car c2(c1);
+    s1.addlisting(102,c2,3800000,&PakWheels);
     s1.displaySellerListings();
+    PakWheels.displayAllListings();
+    
+	b1.sendMessage(&PakWheels);
 
     return 0;
 }
