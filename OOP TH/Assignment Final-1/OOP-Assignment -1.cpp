@@ -1,18 +1,53 @@
-
 #include <iostream>
+#include <string>
+#include <sstream>
+
 using namespace std;
 
-class MarketPlace;//Forward Declaration
+class Listing;
 class Seller;
+class Buyer;
+class MarketPlace;
 
-/* I have used default and paramerterized constructor in every class to ensure if user
-does not give info about that class then it will not intialize with garbage values and
-if user gives the correct info, it will directly assign to the object attribute.*/
+// -------------------- Abstract Interfaces (Normally Header Files) --------------------
+class Displayable
+{
+public:
+    virtual void displayDetails() const = 0;
+    virtual ~Displayable() {}
+};
 
+class Searchable
+{
+public:
+    virtual bool matchesKeyword(const string &keyword) const = 0;
+    virtual ~Searchable() {}
+};
 
+class Billable
+{
+public:
+    virtual double finalAmount() const = 0;
+    virtual ~Billable() {}
+};
 
+class PersonBase
+{
+protected:
+    int userID;
+    string name;
 
-//---------------Location Class------------------
+public:
+    PersonBase() : userID(0), name("Unknown") {}
+    PersonBase(int id, const string &n) : userID(id), name(n) {}
+
+    virtual void viewProfile() const = 0;
+    virtual void updateProfile() = 0;
+
+    virtual ~PersonBase() {}
+};
+
+// -------------------- Utility Classes --------------------
 class Location
 {
 private:
@@ -23,1141 +58,957 @@ private:
     int zipcode;
 
 public:
-	
-    Location()   //Default constructor initializes objects with safe default values.
+    Location() : city("Unknown"), area("Unknown"), province("Unknown"), country("Unknown"), zipcode(0) {}
+    Location(string ctry, string prov, string c, string a, int z)
+        : city(c), area(a), province(prov), country(ctry), zipcode(z) {}
+
+    string getCity() const { return city; }
+    string getArea() const { return area; }
+    string getProvince() const { return province; }
+    string getCountry() const { return country; }
+    int getZipCode() const { return zipcode; }
+
+    // Operator Overloading (member)
+    bool operator==(const Location &other) const
     {
-        city = "Unknown";
-        area = "Unknown";
-        province = "Unknown";
-        country = "Unknown";
-        zipcode = 0;
-    }
-    //Parameterized constructor ensures object is created with valid data.
-    Location(string country, string province, string city, string area, int zipcode)
-    {
-        this->country = country;
-        this->city = city;
-        this->area = area;
-        this->province = province;
-        this->zipcode = zipcode;
+        return city == other.city && area == other.area && zipcode == other.zipcode;
     }
 
-    string getCity()
+    bool operator<(const Location &other) const
     {
-        return city;
-    }
-    string getArea()
-    {
-        return area;
-    }
-    string getProvince()
-    {
-        return province;
-    }
-    string getCountry()
-    {
-        return country;
-    }
-    int getZipCode()
-    {
-        return zipcode;
-    }
-    void Displaylocation() const
-    {
-        cout << "\n====== Location Details ======\n";
-        cout << "Area: " << area << endl;
-        cout << "Zipcode: " << zipcode << endl;
-        cout << "City: " << city << endl;
-        cout << "Province: " << province << endl;
-        cout << "Country: " << country << endl;
-        cout << "\n-------------------------------\n";
-    }
-    void updatelocation()
-    {
-        int choice;
-        cout << "\n===== UPDATE LOCATION =====\n";
-        cout << "1. Update Area\n";
-        cout << "2. Update City\n";
-        cout << "3. Update Country\n";
-        cout << "4. Update Province\n";
-        cout << "5. Update Zipcode\n";
-        cout << "Enter Choice: ";
-        cin >> choice;
-
-        switch (choice)
-        {
-        case 1:
-            cout << "Enter New Area: ";
-            cin >> area;
-            cout << "Area Updated Successfully!\n";
-            break;
-
-        case 2:
-            cout << "Enter New City: ";
-            cin >> city;
-            cout << "City Updated Successfully!\n";
-            break;
-
-        case 3:
-            cout << "Enter New Country: ";
-            cin >> country;
-            cout << "Country Updated Successfully!\n";
-            break;
-
-        case 4:
-            cout << "Enter New Province: ";
-            cin >> province;
-            cout << "Province Updated Successfully!\n";
-            break;
-        case 5:
-            cout << "Enter New Zipcode: ";
-            cin >> zipcode;
-            cout << "Zipcode Updated Successfully!\n";
-        default:
-            cout << "Invalid Choice!\n";
-            break;
-        }
+        return zipcode < other.zipcode;
     }
 
-    bool isSameCity(const Location &other)
+    Location operator+(const Location &other) const
     {
-        if (city == other.city)
-        {
-            return true;
-        }
-        return false;
+        // Simple merge style object: city from left, area from right.
+        Location merged = *this;
+        merged.area = other.area;
+        return merged;
     }
-    bool isSameProvince(const Location &other)
-    {
-        if (province == other.province)
-        {
-            return true;
-        }
-        return false;
-    }
+
+    // Friend stream operators (global)
+    friend ostream &operator<<(ostream &out, const Location &loc);
+    friend istream &operator>>(istream &in, Location &loc);
 };
-//--------------------Engine Class------------------
+
+ostream &operator<<(ostream &out, const Location &loc)
+{
+    out << loc.area << ", " << loc.city << ", " << loc.province << ", " << loc.country << " - " << loc.zipcode;
+    return out;
+}
+
+istream &operator>>(istream &in, Location &loc)
+{
+    in >> loc.city >> loc.area >> loc.province >> loc.country >> loc.zipcode;
+    return in;
+}
+
 class Engine
 {
 private:
-    const string engineNumber;
-    int horsepower;
+    string engineNumber;
+    int horsePower;
     int torque;
     int capacity;
     string engineType;
 
 public:
-    Engine() : engineNumber("0000") //Default constructor initializes objects with safe default values.
+    Engine() : engineNumber("0000"), horsePower(0), torque(0), capacity(1000), engineType("Petrol") {}
+    Engine(string eNo, int hp, int tq, int cap, string type)
+        : engineNumber(eNo), horsePower(hp), torque(tq), capacity(cap), engineType(type) {}
+
+    int getHP() const { return horsePower; }
+    int getCapacity() const { return capacity; }
+
+    double performanceScore() const
     {
-        horsepower = 0;
-        torque = 0;
-        capacity = 0;
-        engineType = "Petrol";
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Engine(string Enumber, int hp, int torque, int Ecap, string type) : engineNumber(Enumber)
-    {
-        horsepower = hp;
-        this->torque = torque;
-        capacity = Ecap;
-        engineType = type;
+        return (double)(horsePower + torque) / capacity;
     }
 
-    int getHP()
+    // Operator Overloading (member)
+    bool operator>(const Engine &other) const
     {
-        return horsepower;
-    }
-    int getcapacity()
-    {
-        return capacity;
-    }
-    string getEngineNumber()
-    {
-        return engineNumber;
+        return horsePower > other.horsePower;
     }
 
-    double performanceScore()
+    bool operator==(const Engine &other) const
     {
-        return (double)horsepower / capacity;
+        return engineNumber == other.engineNumber;
     }
-    bool isPowerfulthan(const Engine &other)
+
+    Engine operator+(const Engine &other) const
     {
-        if (horsepower > other.horsepower)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        Engine blended = *this;
+        blended.horsePower += other.horsePower / 2;
+        blended.torque += other.torque / 2;
+        return blended;
     }
-    int calculateAge(int BuyingYear, int CurrentYear)
-    {
-        return CurrentYear - BuyingYear;
-    }
-    void displaySpecs() const
-    {
-        cout << "\n===== Engine Detail =====\n";
-        cout << "Engine Number: " << engineNumber << endl;
-        cout << "Horse Power: " << horsepower << endl;
-        cout << "Torque: " << torque << " N/M" << endl;
-        cout << "Engine Type: " << engineType << endl;
-        cout << "-----------------------------" << endl;
-    }
+
+    friend ostream &operator<<(ostream &out, const Engine &e);
 };
-//-----------------------Car Class------------------------------
-class Car
+
+ostream &operator<<(ostream &out, const Engine &e)
 {
-private:
+    out << "Engine[" << e.engineNumber << "] " << e.horsePower << "HP, " << e.torque << "Nm, " << e.capacity << "cc, " << e.engineType;
+    return out;
+}
+
+// -------------------- Vehicle Hierarchy --------------------
+class Vehicle : public Displayable, public Searchable
+{
+protected:
+    string regNo;
     string brand;
     string model;
     int year;
-    double price;
+    double basePrice;
     float mileage;
-    string transmission;
     Engine engine;
     Location location;
-    bool PremiumCategory;
 
 public:
-    Car() : engine(), location() //Default constructor initializes objects with safe default values.
+    Vehicle()
+        : regNo("N/A"), brand("N/A"), model("N/A"), year(0), basePrice(0), mileage(0), engine(), location() {}
+
+    Vehicle(string r, string b, string m, int y, double p, float mil, Engine e, Location loc)
+        : regNo(r), brand(b), model(m), year(y), basePrice(p), mileage(mil), engine(e), location(loc) {}
+
+    virtual double roadTax() const = 0;
+    virtual string getType() const = 0;
+    virtual Vehicle *clone() const = 0;
+
+    string getBrand() const { return brand; }
+    string getModel() const { return model; }
+    int getYear() const { return year; }
+    double getPrice() const { return basePrice; }
+    float getMileage() const { return mileage; }
+
+    // Operator Overloading (member)
+    bool operator<(const Vehicle &other) const
     {
-        brand = "";
-        model = "";
-        year = 0;
-        price = 0.0;
-        mileage = 0.0;
-
-        PremiumCategory = false;
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Car(string brand, string model, int year, double price, float mileage, string transmission, Engine e, Location loc) : engine(e)
-    {
-
-        location = loc;
-        this->brand = brand;
-        this->model = model;
-        this->year = year;
-        this->price = price;
-        this->mileage = mileage;
-        this->transmission = transmission;
-        PremiumCategory = false;
-    }
-     /*Copy constructor ensures correct duplication of objects and prevents
-	  shallow copy issues when objects contain pointers or composed objects.*/
-    Car(const Car &car) : engine(car.engine)
-    {
-        brand = car.brand;
-        model = car.model;
-        year = car.year;
-        price = car.price;
-        mileage = car.mileage;
-
-        transmission = car.transmission;
-
-        location = car.location;
-        PremiumCategory = car.PremiumCategory;
+        return basePrice < other.basePrice;
     }
 
-    string getBrand() const
+    bool operator==(const Vehicle &other) const
     {
-        return brand;
-    }
-    double getPrice()
-    {
-        return price;
-    }
-    int getYear()
-    {
-        return year;
-    }
-    float getmileage()
-    {
-        return mileage;
-    }
-    string getmodel()
-    {
-        return model;
-    }
-    void setMileage(float mil)
-    {
-        mileage = mil;
+        return regNo == other.regNo;
     }
 
-    void displayCarDetails() const
+    // Common searchable behavior for all vehicle types.
+    bool matchesKeyword(const string &keyword) const
     {
-        cout << "Brand: " << brand << endl;
-        cout << "Model: " << model << endl;
-        cout << "Year: " << year << endl;
-        cout << "Price: " << price << endl;
-        cout << "Mileage: " << mileage << endl;
-        cout << "Premium Category: " << (PremiumCategory ? "Yes" : "No");
-        engine.displaySpecs();
-        location.Displaylocation();
+        return brand == keyword || model == keyword || regNo == keyword;
     }
-    bool isPremium()
-    {
-        return price > 5000000;
-    }
-    void updatePrice()
-    {
-        double newPrice;
-        cout << "Enter New Price: ";
-        cin >> newPrice;
 
-        price = newPrice;
-        cout << "Price Updated!" << endl;
-    }
-    void CompareCarPrice(const Car &other)
-    {
-        if (price > other.price)
-        {
-            cout << "It is Expensive" << endl;
-        }
-        else
-        {
-            cout << "It is Cheaper" << endl;
-        }
-    }
+    virtual ~Vehicle() {}
 };
-//------------------------------User Class-------------------------
-class User
+
+class Car : public Vehicle
 {
 private:
-    int userID;
-    string name;
+    bool hybrid;
+
+public:
+    Car() : Vehicle(), hybrid(false) {}
+    Car(string r, string b, string m, int y, double p, float mil, Engine e, Location loc, bool h)
+        : Vehicle(r, b, m, y, p, mil, e, loc), hybrid(h) {}
+
+    double roadTax() const
+    {
+        return basePrice * 0.03;
+    }
+
+    string getType() const
+    {
+        return "Car";
+    }
+
+    Vehicle *clone() const
+    {
+        return new Car(*this);
+    }
+
+    // Polymorphic overriding
+    void displayDetails() const
+    {
+        cout << "\n[Car] " << brand << " " << model << " (" << year << ")\n";
+        cout << "Reg#: " << regNo << " | Price: " << basePrice << " | Mileage: " << mileage << "\n";
+        cout << "Hybrid: " << (hybrid ? "Yes" : "No") << "\n";
+        cout << engine << "\n";
+        cout << "Location: " << location << "\n";
+    }
+};
+
+class Bike : public Vehicle
+{
+private:
+    bool sportsEdition;
+
+public:
+    Bike() : Vehicle(), sportsEdition(false) {}
+    Bike(string r, string b, string m, int y, double p, float mil, Engine e, Location loc, bool s)
+        : Vehicle(r, b, m, y, p, mil, e, loc), sportsEdition(s) {}
+
+    double roadTax() const
+    {
+        return basePrice * 0.015;
+    }
+
+    string getType() const
+    {
+        return "Bike";
+    }
+
+    Vehicle *clone() const
+    {
+        return new Bike(*this);
+    }
+
+    // Polymorphic overriding
+    void displayDetails() const
+    {
+        cout << "\n[Bike] " << brand << " " << model << " (" << year << ")\n";
+        cout << "Reg#: " << regNo << " | Price: " << basePrice << " | Mileage: " << mileage << "\n";
+        cout << "Sports Edition: " << (sportsEdition ? "Yes" : "No") << "\n";
+        cout << engine << "\n";
+        cout << "Location: " << location << "\n";
+    }
+};
+
+class Truck : public Vehicle
+{
+private:
+    int loadCapacityKg;
+
+public:
+    Truck() : Vehicle(), loadCapacityKg(0) {}
+    Truck(string r, string b, string m, int y, double p, float mil, Engine e, Location loc, int loadKg)
+        : Vehicle(r, b, m, y, p, mil, e, loc), loadCapacityKg(loadKg) {}
+
+    double roadTax() const
+    {
+        return basePrice * 0.04;
+    }
+
+    string getType() const
+    {
+        return "Truck";
+    }
+
+    Vehicle *clone() const
+    {
+        return new Truck(*this);
+    }
+
+    // Polymorphic overriding
+    void displayDetails() const
+    {
+        cout << "\n[Truck] " << brand << " " << model << " (" << year << ")\n";
+        cout << "Reg#: " << regNo << " | Price: " << basePrice << " | Mileage: " << mileage << "\n";
+        cout << "Load Capacity: " << loadCapacityKg << " KG\n";
+        cout << engine << "\n";
+        cout << "Location: " << location << "\n";
+    }
+};
+
+// -------------------- User Hierarchy --------------------
+class User : public PersonBase, public Displayable
+{
+private:
     string email;
     string phone;
     string city;
 
+protected:
+    bool loggedIn;
+
 public:
-    User() //Default constructor initializes objects with safe default values.
-    {
-        userID = 0;
-        name = "Unknown";
-        email = "Unknown@gmail.com";
-        phone = "0000-000000";
-        city = "Unknown";
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    User(int id, string name, string email, string phone, string city)
-    {
-        userID = id;
-        this->name = name;
-        this->email = email;
-        this->phone = phone;
-        this->city = city;
-    }
-    void setName(string name)
-    {
-        this->name = name;
-    }
-    void setEmail(string email)
-    {
-        this->email = email;
-    }
-    int getUserId()
-    {
-        return userID;
-    }
-    string getName()
-    {
-        return name;
-    }
-    string getEmail()
-    {
-        return email;
-    }
+    User() : PersonBase(), email("Unknown@gmail.com"), phone("0000-0000000"), city("Unknown"), loggedIn(false) {}
+    User(int id, string n, string e, string p, string c)
+        : PersonBase(id, n), email(e), phone(p), city(c), loggedIn(false) {}
+
+    int getUserID() const { return userID; }
+    string getName() const { return name; }
+    string getCity() const { return city; }
+
     void login()
     {
-        cout << name << " Logged In Successfully" << endl;
+        loggedIn = true;
+        cout << name << " logged in.\n";
     }
+
     void logout()
     {
-        cout << name << " Logged Out Successfully" << endl;
+        loggedIn = false;
+        cout << name << " logged out.\n";
     }
+
+    // Function overriding from abstract class
     void viewProfile() const
     {
-        
-        cout << "User Id: " << userID << endl;
-        cout << "Name: " << name << endl;
-        cout << "Email: " << email << endl;
-        cout << "Phone: " << phone << endl;
-        cout << "City: " << city << endl;
+        cout << "ID: " << userID << " | Name: " << name << " | Email: " << email;
+        cout << " | Phone: " << phone << " | City: " << city << "\n";
     }
+
+    // Function overriding from abstract class
     void updateProfile()
     {
-
-        int choice;
-
-        cout << "\n--- Update Profile ---\n";
-        cout << "1. Update Name\n";
-        cout << "2. Update Email\n";
-        cout << "3. Update Phone\n";
-        cout << "4. Update City\n";
-        cout << "Enter Choice: ";
-        cin >> choice;
-
-        switch (choice)
-        {
-        case 1:
-            cout << "Enter New Name: ";
-            cin >> name;
-            cout << "Name Updated Successfully!\n";
-            break;
-
-        case 2:
-            cout << "Enter New Email: ";
-            cin >> email;
-            cout << "Email Updated Successfully!\n";
-            break;
-
-        case 3:
-            cout << "Enter New Phone: ";
-            cin >> phone;
-            cout << "Phone Updated Successfully!\n";
-            break;
-
-        case 4:
-            cout << "Enter New City: ";
-            cin >> city;
-            cout << "City Updated Successfully!\n";
-            break;
-
-        default:
-            cout << "Invalid Choice!\n";
-            break;
-        }
+        cout << "\nUpdating basic profile for " << name << "\n";
+        city = city + "-Updated";
     }
+
+    // Function overriding from Displayable
+    void displayDetails() const
+    {
+        viewProfile();
+    }
+
+    // Operator overloading (member)
+    bool operator==(const User &other) const
+    {
+        return userID == other.userID;
+    }
+
+    bool operator<(const User &other) const
+    {
+        return userID < other.userID;
+    }
+
+    // Friend function and friend class to justify controlled private access.
+    friend bool canExchangePrivateContact(const Buyer &b, const Seller &s);
+    friend class AuthInspector;
+
+    virtual ~User() {}
 };
-//---------------------------Message Class---------------------
-class Message
+
+class Buyer : public User
 {
 private:
-    const int messageId;
-    int senderId;
-    int receiverId;
-    string message;
-    bool isread;
-    static int totalmessages;
+    double budget;
+    string preferredBrand;
+    Listing *favorites[30];
+    int favoriteCount;
 
 public:
-    Message() : messageId(0) //Default constructor initializes objects with safe default values.
+    Buyer() : User(), budget(0), preferredBrand("N/A"), favoriteCount(0)
     {
+        for (int i = 0; i < 30; i++)
+            favorites[i] = nullptr;
+    }
 
-        senderId = 0;
-        receiverId = 0;
-        message = "N/A";
-        isread = false;
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Message(int sid, int rid, string text) : messageId(++totalmessages)
+    Buyer(int id, string n, string e, string p, string c, double b, string pref)
+        : User(id, n, e, p, c), budget(b), preferredBrand(pref), favoriteCount(0)
     {
+        for (int i = 0; i < 30; i++)
+            favorites[i] = nullptr;
+    }
 
-        senderId = sid;
-        receiverId = rid;
-        message = text;
-        isread = false;
-    }
-    string getText()
+    double getBudget() const { return budget; }
+
+    // Function overloading
+    void setPreference(const string &brand)
     {
-        return message;
+        preferredBrand = brand;
     }
-    bool getReadstatus()
+
+    void setPreference(const string &brand, double maxBudget)
     {
-        return isread;
+        preferredBrand = brand;
+        budget = maxBudget;
     }
-    void send()
+
+    void addFavorite(Listing *l);
+
+    // Operator overloading (member)
+    Buyer operator+(double extraBudget) const
     {
-        cout << "Message Sent Successfully!" << endl;
+        Buyer temp = *this;
+        temp.budget += extraBudget;
+        return temp;
     }
-    void Markread()
+
+    void displayDetails() const
     {
-        isread = true;
-        cout << "Message Marked as Read!" << endl;
-    }
-    void displayMessage()
-    {
-        cout << "\n------ MESSAGE DETAILS ------\n";
-        cout << "Message ID: " << messageId << endl;
-        cout << "Sender ID: " << senderId << endl;
-        cout << "Receiver ID: " << receiverId << endl;
-        cout << "Message: " << message << endl;
-        cout << "Status: " << (isread ? "Read" : "Unread") << endl;
+        cout << "[Buyer] ";
+        User::displayDetails();
+        cout << "Budget: " << budget << " | Preferred Brand: " << preferredBrand << "\n";
     }
 };
 
-int Message::totalmessages = 0;
-//---------------Listing Class-------------------
-class Listing
+class Admin : public User
 {
-    const int listingId;
-    Car car;
-    Seller *seller;
-    double askingPrice;
-    string status;
-    string postdate;
-    const int platformfee;
+protected:
+    int adminLevel;
+    int approvedCount;
+    int removedCount;
 
 public:
-    Listing() : listingId(00), car(), platformfee(0.04) //Default constructor initializes objects with safe default values.
-    {
-        seller = nullptr;
-        askingPrice = 0.0;
-        status = "N/A";
-        postdate = "N/A";
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Listing(int id, Car c, Seller *s, double price) : listingId(id), platformfee(0.04), car(c), seller(s)
-    {
+    Admin() : User(), adminLevel(1), approvedCount(0), removedCount(0) {}
+    Admin(int id, string n, string e, string p, string c, int level)
+        : User(id, n, e, p, c), adminLevel(level), approvedCount(0), removedCount(0) {}
 
-        askingPrice = price;
-        postdate = "Today";
-        status = "Not Approved";
-    }
-    int getListingid() const
-    {
-        return listingId;
-    }
-    string getStatus()
-    {
-        return status;
-    }
-    double getaskPrice()
-    {
-        return askingPrice;
-    }
-    Car getcar()
-    {
-        return car;
-    }
-    void setPrice(double p)
-    {
-        askingPrice = p;
-    }
-    double calculatePlatformCommission()
-    {
-        return askingPrice * platformfee;
-    }
-    void setStatus(string newStatus)
-    {
-        status = newStatus;
-    }
-    void updateStatus()
-    {
-        if (status == "Approved")
-        {
-            status = "Remove";
-        }
-        else
-        {
-            status = "Approved";
-        }
-    }
+    void approveListing(Listing &l);
+    void removeListing(Listing &l);
 
-    void displayListing() const;
-
-    void setPostDate(string pd)
+    void displayDetails() const
     {
-        postdate = pd;
+        cout << "[Admin] ";
+        User::displayDetails();
+        cout << "Admin Level: " << adminLevel << " | Approved: " << approvedCount << " | Removed: " << removedCount << "\n";
     }
 };
-//------------------Seller Class---------------------
-class Seller
+
+class SuperAdmin : public Admin
 {
 private:
-    User user;
-    Listing *listings[20];
-    int total_listing;
+    bool systemAccess;
+
+public:
+    SuperAdmin() : Admin(), systemAccess(true) {}
+    SuperAdmin(int id, string n, string e, string p, string c)
+        : Admin(id, n, e, p, c, 5), systemAccess(true) {}
+
+    void displayDetails() const
+    {
+        cout << "[SuperAdmin] ";
+        User::displayDetails();
+        cout << "System Access: " << (systemAccess ? "Full" : "Limited") << "\n";
+    }
+};
+
+class Moderator : public Admin
+{
+private:
+    string section;
+
+public:
+    Moderator() : Admin(), section("Listings") {}
+    Moderator(int id, string n, string e, string p, string c, string sec)
+        : Admin(id, n, e, p, c, 2), section(sec) {}
+
+    void displayDetails() const
+    {
+        cout << "[Moderator] ";
+        User::displayDetails();
+        cout << "Section: " << section << "\n";
+    }
+};
+
+class Seller : public User
+{
+private:
     string showroomName;
     float rating;
     bool verified;
-    static int totalSeller;
+    Listing *inventory[20];
+    int totalListings;
 
 public:
-    Seller() //Default constructor initializes objects with safe default values.
+    Seller() : User(), showroomName("Unknown"), rating(0), verified(false), totalListings(0)
     {
-        total_listing = 0;
-        showroomName = "Unknown";
-        rating = 0.0;
-        totalSeller++;
-        verified = false;
         for (int i = 0; i < 20; i++)
-        {
-            listings[i] = nullptr;
-        }
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Seller(User u, string showroomName)
-    {
-        user = u;
-        this->showroomName = showroomName;
-        rating = 0.0;
-        totalSeller++;
-        verified = false;
-        total_listing = 0;
-        for (int i = 0; i < 20; i++)
-        {
-            listings[i] = nullptr;
-        }
+            inventory[i] = nullptr;
     }
 
-    int getTotallisting()
+    Seller(int id, string n, string e, string p, string c, string showroom)
+        : User(id, n, e, p, c), showroomName(showroom), rating(0), verified(false), totalListings(0)
     {
-        return total_listing;
+        for (int i = 0; i < 20; i++)
+            inventory[i] = nullptr;
     }
+
     void setRating(float r)
     {
         if (r >= 0 && r <= 5)
         {
             rating = r;
-            cout << "Rating Updated Successfully!\n";
+            verified = (rating >= 2.5);
         }
-        else
-        {
-            cout << "Rating must be between 0 and 5!\n";
-        }
-    }
-    void addlisting(int id, Car c, double price, MarketPlace *mp);
-
-    void updatelisting()
-    {
-        int index;
-        double newprice;
-        cout << "Enter Index: ";
-        cin >> index;
-        if (index >= 0 && index < total_listing)
-        {
-            cout << "Enter New Price: ";
-            cin >> newprice;
-            listings[index]->setPrice(newprice);
-            cout << "Price Updated Successfully!" << endl;
-        }
-        else
-        {
-            cout << "Invalid Index" << endl;
-        }
-    }
-    void removelisting()
-    {
-
-        int index;
-        cout << "Enter Index: ";
-        cin >> index;
-        if (index >= 0 && index < total_listing)
-        {
-            for (int i = index; i < total_listing - 1; i++)
-            {
-                listings[i] = listings[i + 1];
-            }
-
-            listings[total_listing - 1] = nullptr;
-            total_listing--;
-            cout << "Listing at Index " << index << " Removed" << endl;
-        }
-        else
-        {
-            cout << "Invalid Index!" << endl;
-        }
-    }
-    void displaySellerListings() const
-    {
-        if (total_listing == 0)
-        {
-            cout << "No listing Available!" << endl;
-            return;
-        }
-        for (int i = 0; i < total_listing; i++)
-        {
-            if (listings[i] != nullptr)
-                listings[i]->displayListing();
-        }
-    }
-    void updateSellerProfile()
-    {
-        user.updateProfile();
     }
 
-    void VerifSeller()
-    {
-        if (rating >= 2.5)
-        {
-            verified = true;
-        }
-    }
-    void displaySeller() const
-    {
-        cout << "====== Seller Details ======" << endl;
-        user.viewProfile();
-        cout << "ShowRoom Name: " << showroomName << endl;
-        cout << "Rating: " << rating << endl;
-        cout << "Verified: " << (verified ? "Yes" : "No") << endl;
-        cout << "Total Listing: " << total_listing << endl;
-    }
+    int getTotalListings() const { return totalListings; }
 
-    void displytotalsellers()
+    void addListing(int listingId, Vehicle *v, double ask, MarketPlace *mp);
+
+    void displayInventory() const;
+
+    void displayDetails() const
     {
-        cout << "Total: " << totalSeller << endl;
-    }
-    int getUserid()
-    {
-        return user.getUserId();
+        cout << "[Seller] ";
+        User::displayDetails();
+        cout << "Showroom: " << showroomName << " | Rating: " << rating;
+        cout << " | Verified: " << (verified ? "Yes" : "No") << " | Listings: " << totalListings << "\n";
     }
 };
-int Seller::totalSeller = 0;
-//-----------------Buyer Class-------------------
-class Buyer
+
+// -------------------- Message and Listing --------------------
+class Message : public Displayable
 {
 private:
-    User user;
-    string preferedBrand;
-    Listing *favourites[30];
-    int favouriteCount;
-    double budget;
-
-public:
-    Buyer() //Default constructor initializes objects with safe default values.
-    {
-        favouriteCount = 0;
-        budget = 0;
-        preferedBrand = "";
-        for (int i = 0; i < 30; i++)
-        {
-            favourites[i] = nullptr;
-        }
-    }
-     //Parameterized constructor ensures object is created with valid data.
-
-    Buyer(User u, double Budget, string preferedbrand)
-    {
-        user = u;
-        budget = Budget;
-        favouriteCount = 0;
-        preferedBrand = preferedbrand;
-        for (int i = 0; i < 30; i++)
-        {
-            favourites[i] = nullptr;
-        }
-    }
-    double getBudget()
-    {
-        return budget;
-    }
-
-    int getfavoriteCount()
-    {
-        return favouriteCount;
-    }
-
-    void setBudget(double budget)
-    {
-        this->budget = budget;
-    }
-    void saveFavorite(Listing *fav)
-    {
-        if (favouriteCount < 30)
-        {
-            favourites[favouriteCount++] = fav;
-            cout << "Listing Added to Favorites!\n";
-        }
-        else
-        {
-            cout << "Favorite List is Full!\n";
-        }
-    }
-    void removeFavorite(int index)
-    {
-        if (index < 0 || index >= favouriteCount)
-        {
-            cout << "Invalid Index!\n";
-            return;
-        }
-
-        for (int i = index; i < favouriteCount - 1; i++)
-        {
-            favourites[i] = favourites[i + 1];
-        }
-
-        favouriteCount--;
-        cout << "Favorite Removed Successfully!\n";
-    }
-    void displayFavorites()
-    {
-        if (favouriteCount == 0)
-        {
-            cout << "No Favorites Added Yet!\n";
-            return;
-        }
-
-        cout << "\n--- Favorite Listings ---\n";
-
-        for (int i = 0; i < favouriteCount; i++)
-        {
-            cout << "\nFavorite " << i + 1 << ":\n";
-            favourites[i]->displayListing();
-        }
-    }
-    void sendMessage(MarketPlace *marketplace);
-    void updateBuyerProfile()
-    {
-        user.updateProfile();
-    }
-    int getUserid()
-    {
-        return user.getUserId();
-    }
-};
-//-----------------Admin Class---------------------
-class Admin
-{
-private:
-    User user;
-    const int adminid;
-    int approvedCount;
-    int adminlevel;
-    int removeCount;
-    static int totalAdmins;
-
-public:
-    Admin() : adminid(++totalAdmins) //Default constructor initializes objects with safe default values.
-    {
-        approvedCount = 0;
-        removeCount = 0;
-        adminlevel = 1;
-    }
-     //Parameterized constructor ensures object is created with valid data.
-    Admin(User u, int level) : adminid(++totalAdmins)
-    {
-        adminlevel = level;
-        user = u;
-        approvedCount = 0;
-        removeCount = 0;
-    }
-    Admin(const Admin &other) : adminid(other.adminid)
-    {
-        adminlevel = other.adminlevel;
-        user = other.user;
-        approvedCount = other.approvedCount;
-        removeCount = other.removeCount;
-        totalAdmins++;
-    }
-    void approvedlisting(Listing &l)
-    {
-        l.updateStatus();
-        approvedCount++;
-        cout << "Approved Listing!" << endl;
-    }
-    void removeListing(Listing &l)
-    {
-        l.updateStatus();
-        removeCount++;
-    }
-    void generateReport() const
-    {
-        cout << "\n----- Admin Report -----\n";
-        cout << "Admin ID: " << adminid << endl;
-        cout << "Admin Level: " << adminlevel << endl;
-        cout << "Total Approved Listings: " << approvedCount << endl;
-        cout << "Total Removed Listings: " << removeCount << endl;
-    }
-
-    void displayAdminPanel() const
-    {
-        cout << "\n===== Admin Panel =====\n";
-        cout << "Admin ID: " << adminid << endl;
-        cout << "Level: " << adminlevel << endl;
-    }
-
-    void DisplayTotalAdmins()
-    {
-        cout << "Total Admins: " << totalAdmins << endl;
-    }
-    ~Admin()
-    {
-        totalAdmins--;
-    }
-};
-int Admin::totalAdmins = 0;
-//-------------------MarketPlace Class-----------------
-class MarketPlace
-{
-private:
-    User *user[100];
-    Listing *listings[200];
-    Message *messages[200];
-    static int totalUsers;
-    static int totalListings;
+    int messageID;
+    int senderID;
+    int receiverID;
+    string text;
+    bool isRead;
     static int totalMessages;
 
 public:
-    MarketPlace() : messages() //Default constructor initializes objects with safe default values.
+    Message() : messageID(++totalMessages), senderID(0), receiverID(0), text("N/A"), isRead(false) {}
+    Message(int sid, int rid, string msg)
+        : messageID(++totalMessages), senderID(sid), receiverID(rid), text(msg), isRead(false) {}
+
+    void markRead() { isRead = true; }
+
+    bool operator==(const Message &other) const
+    {
+        return messageID == other.messageID;
+    }
+
+    bool operator<(const Message &other) const
+    {
+        return messageID < other.messageID;
+    }
+
+    void displayDetails() const
+    {
+        cout << "Message#" << messageID << " | Sender: " << senderID << " | Receiver: " << receiverID;
+        cout << " | Text: " << text << " | Status: " << (isRead ? "Read" : "Unread") << "\n";
+    }
+};
+
+int Message::totalMessages = 0;
+
+class AuditService;
+
+class Listing : public Displayable, public Billable
+{
+private:
+    int listingID;
+    Vehicle *vehicle;
+    Seller *seller;
+    double askingPrice;
+    string status;
+    string postDate;
+    const double platformFeeRate;
+
+public:
+    Listing()
+        : listingID(0), vehicle(nullptr), seller(nullptr), askingPrice(0), status("Draft"), postDate("Today"), platformFeeRate(0.04) {}
+
+    Listing(int id, Vehicle *v, Seller *s, double ask)
+        : listingID(id), vehicle(v), seller(s), askingPrice(ask), status("Pending"), postDate("Today"), platformFeeRate(0.04) {}
+
+    Listing(const Listing &other)
+        : listingID(other.listingID),
+          vehicle(other.vehicle != nullptr ? other.vehicle->clone() : nullptr),
+          seller(other.seller),
+          askingPrice(other.askingPrice),
+          status(other.status),
+          postDate(other.postDate),
+          platformFeeRate(other.platformFeeRate) {}
+
+    Listing &operator=(const Listing &other)
+    {
+        if (this != &other)
+        {
+            delete vehicle;
+            vehicle = (other.vehicle != nullptr) ? other.vehicle->clone() : nullptr;
+            seller = other.seller;
+            askingPrice = other.askingPrice;
+            status = other.status;
+            postDate = other.postDate;
+        }
+        return *this;
+    }
+
+    int getListingID() const { return listingID; }
+    double getAskPrice() const { return askingPrice; }
+    string getStatus() const { return status; }
+    Vehicle *getVehicle() const { return vehicle; }
+
+    void setStatus(const string &st) { status = st; }
+    void setAskPrice(double p) { askingPrice = p; }
+
+    // Billable override
+    double finalAmount() const
+    {
+        return askingPrice + askingPrice * platformFeeRate;
+    }
+
+    // Operator Overloading (member)
+    bool operator==(const Listing &other) const
+    {
+        return listingID == other.listingID;
+    }
+
+    bool operator<(const Listing &other) const
+    {
+        return askingPrice < other.askingPrice;
+    }
+
+    Listing operator+(double increment) const
+    {
+        Listing temp = *this;
+        temp.askingPrice += increment;
+        return temp;
+    }
+
+    void displayDetails() const
+    {
+        cout << "\n------ Listing ------\n";
+        cout << "Listing ID: " << listingID << " | Ask Price: " << askingPrice;
+        cout << " | Final Amount: " << finalAmount() << " | Status: " << status << " | Post Date: " << postDate << "\n";
+        if (seller != nullptr)
+            cout << "Seller: " << seller->getName() << "\n";
+        if (vehicle != nullptr)
+            vehicle->displayDetails();
+    }
+
+    // Friend class + friend operators
+    friend class AuditService;
+    friend ostream &operator<<(ostream &out, const Listing &l);
+    friend istream &operator>>(istream &in, Listing &l);
+
+    ~Listing()
+    {
+        delete vehicle;
+    }
+};
+
+ostream &operator<<(ostream &out, const Listing &l)
+{
+    out << "Listing(" << l.listingID << ") Price=" << l.askingPrice << " Status=" << l.status;
+    return out;
+}
+
+istream &operator>>(istream &in, Listing &l)
+{
+    in >> l.askingPrice >> l.status;
+    return in;
+}
+
+class AuditService
+{
+public:
+    static void showInternalListingData(const Listing &l)
+    {
+        cout << "[Audit] Listing#" << l.listingID << " | Fee Rate: " << l.platformFeeRate << " | Ask: " << l.askingPrice << "\n";
+    }
+};
+
+// -------------------- Marketplace --------------------
+class MarketPlace : public Displayable
+{
+private:
+    User *users[100];
+    Listing *listings[200];
+    Message *messages[200];
+
+    int totalUsers;
+    int totalListings;
+    int totalMessages;
+
+public:
+    MarketPlace() : totalUsers(0), totalListings(0), totalMessages(0)
     {
         for (int i = 0; i < 100; i++)
-        {
-            user[i] = nullptr;
-        }
+            users[i] = nullptr;
         for (int i = 0; i < 200; i++)
         {
             listings[i] = nullptr;
-        }
-        for (int i = 0; i < 200; i++)
             messages[i] = nullptr;
-    }
-
-    void getTotallisting()
-    {
-        cout << "Total Lisiting: " << totalListings << endl;
-    }
-    void gettotalusers()
-    {
-        cout << "Total Users: " << totalUsers << endl;
+        }
     }
 
     void addUser(User *u)
     {
         if (totalUsers < 100)
-        {
-            user[totalUsers++] = u;
-            cout << "User Added!" << endl;
-        }
+            users[totalUsers++] = u;
     }
 
     void addListing(Listing *l)
     {
         if (totalListings < 200)
-        {
             listings[totalListings++] = l;
-            cout << "Listing Added!" << endl;
-        }
     }
-    void searchBybrand(string brand) const
-    {
-        bool found = false;
-        for (int i = 0; i < totalListings; i++)
-        {
-            if (listings[i]->getcar().getBrand() == brand)
-            {
-                listings[i]->displayListing();
-                found = true;
-            }
-        }
-        if (!found)
-        {
-            cout << "No Car Found of Brand " << brand << endl;
-        }
-    }
-    void filterByPrice(double start, double end) const
-    {
-        for (int i = 0; i < totalListings; i++)
-        {
-            double price = listings[i]->getaskPrice();
-            if (price >= start && price <= end)
-            {
-                listings[i]->displayListing();
-            }
-        }
-    }
-    void displayAllListings() const
-    {
-        if (totalListings == 0)
-        {
-            cout << "No listing!" << endl;
-        }
-        for (int i = 0; i < totalListings; i++)
-        {
-            cout << "\n------ Listing " << i + 1 << "------\n";
-            listings[i]->displayListing();
-        }
-    }
-    void searchBymodel(string model) const
-    {
-        bool found = false;
-        for (int i = 0; i < totalListings; i++)
-        {
-            if (listings[i]->getcar().getmodel() == model)
-            {
-                listings[i]->displayListing();
-                found = true;
-            }
-        }
-        if (!found)
-        {
-            cout << "No Car Found of Model " << model << endl;
-        }
-    }
-    void searchByYear(int year) const
-    {
-        bool found = false;
-        for (int i = 0; i < totalListings; i++)
-        {
-            if (listings[i]->getcar().getYear() == year)
-            {
-                listings[i]->displayListing();
-                found = true;
-            }
-        }
-        if (!found)
-        {
-            cout << "No Car Found of Year " << year << endl;
-        }
-    }
-    Listing *searchListingByid(int id) const
-    {
-        bool found = false;
-        for (int i = 0; i < totalListings; i++)
-        {
-            if (listings[i]->getListingid() == id)
-            {
-                return listings[i];
-            }
-        }
-        return nullptr;
-    }
-    void searchBymileage(float mileage) const
-    {
-        bool found = false;
-        for (int i = 0; i < totalListings; i++)
-        {
-            if (listings[i]->getcar().getmileage() == mileage)
-            {
-                listings[i]->displayListing();
-                found = true;
-            }
-        }
-        if (!found)
-        {
-            cout << "No Car Found of Mileage " << mileage << endl;
-        }
-    }
+
     void addMessage(Message *m)
     {
         if (totalMessages < 200)
             messages[totalMessages++] = m;
     }
-    ~MarketPlace()
+
+    Listing *searchByID(int id) const
     {
         for (int i = 0; i < totalListings; i++)
         {
-            delete listings[i];
+            if (listings[i] != nullptr && listings[i]->getListingID() == id)
+                return listings[i];
         }
+        return nullptr;
+    }
 
-        for (int i = 0; i < totalMessages; i++)
+    // Function Overloading (compile-time polymorphism)
+    void search(const string &brand) const
+    {
+        cout << "\nSearch by brand: " << brand << "\n";
+        bool found = false;
+        for (int i = 0; i < totalListings; i++)
         {
-            delete messages[i];
+            Vehicle *v = listings[i]->getVehicle();
+            if (v != nullptr && v->getBrand() == brand)
+            {
+                listings[i]->displayDetails();
+                found = true;
+            }
         }
-        for (int i = 0; i < 100; i++)
+        if (!found)
+            cout << "No listing found.\n";
+    }
+
+    void search(const string &brand, const string &model) const
+    {
+        cout << "\nSearch by brand+model: " << brand << " " << model << "\n";
+        bool found = false;
+        for (int i = 0; i < totalListings; i++)
         {
-            delete user[i];
+            Vehicle *v = listings[i]->getVehicle();
+            if (v != nullptr && v->getBrand() == brand && v->getModel() == model)
+            {
+                listings[i]->displayDetails();
+                found = true;
+            }
+        }
+        if (!found)
+            cout << "No listing found.\n";
+    }
+
+    void search(int startYear, int endYear) const
+    {
+        cout << "\nSearch by year range: " << startYear << "-" << endYear << "\n";
+        for (int i = 0; i < totalListings; i++)
+        {
+            Vehicle *v = listings[i]->getVehicle();
+            if (v != nullptr && v->getYear() >= startYear && v->getYear() <= endYear)
+            {
+                listings[i]->displayDetails();
+            }
         }
     }
-};
-int MarketPlace::totalUsers = 0;
-int MarketPlace::totalListings = 0;
-int MarketPlace::totalMessages = 0;
 
-// Defination of Some Functions because they were causing errors
-
-void Listing::displayListing() const
-{
-    cout << "ID: " << getListingid() << endl;
-    car.displayCarDetails();
-    seller->displaySeller();
-    cout << "Asking Price: " << askingPrice << endl;
-    cout << "Status: " << status << endl;
-    cout << "PostDate: " << postdate << endl;
-}
-void Seller::addlisting(int id, Car c, double price, MarketPlace *mp)
-{
-    if (total_listing < 20)
+    void search(double minPrice, double maxPrice) const
     {
-        Listing *l = new Listing(id, c, this, price);
-        listings[total_listing++] = l;
-        mp->addListing(l);
+        cout << "\nSearch by price range: " << minPrice << " - " << maxPrice << "\n";
+        for (int i = 0; i < totalListings; i++)
+        {
+            double p = listings[i]->getAskPrice();
+            if (p >= minPrice && p <= maxPrice)
+                listings[i]->displayDetails();
+        }
+    }
 
-        cout << "Listing Added!" << endl;
+    // Operator Overloading (member)
+    MarketPlace &operator+=(User *u)
+    {
+        addUser(u);
+        return *this;
+    }
+
+    MarketPlace &operator+=(Listing *l)
+    {
+        addListing(l);
+        return *this;
+    }
+
+    void displayDetails() const
+    {
+        cout << "\n===== Marketplace Summary =====\n";
+        cout << "Users: " << totalUsers << " | Listings: " << totalListings << " | Messages: " << totalMessages << "\n";
+    }
+
+    ~MarketPlace()
+    {
+        for (int i = 0; i < totalListings; i++)
+            delete listings[i];
+
+        for (int i = 0; i < totalMessages; i++)
+            delete messages[i];
+
+        for (int i = 0; i < totalUsers; i++)
+            delete users[i];
+    }
+};
+
+// -------------------- Deferred Methods --------------------
+void Buyer::addFavorite(Listing *l)
+{
+    if (favoriteCount < 30)
+    {
+        favorites[favoriteCount++] = l;
+        cout << name << " saved listing " << l->getListingID() << " to favorites.\n";
+    }
+}
+
+void Seller::addListing(int listingId, Vehicle *v, double ask, MarketPlace *mp)
+{
+    if (totalListings < 20)
+    {
+        Listing *newListing = new Listing(listingId, v, this, ask);
+        inventory[totalListings++] = newListing;
+        mp->addListing(newListing);
+        cout << showroomName << " added listing " << listingId << "\n";
     }
     else
     {
-        cout << "Listing Limit Reached!" << endl;
+        cout << "Listing limit reached for seller.\n";
+        delete v;
     }
 }
-void Buyer::sendMessage(MarketPlace *marketplace)
+
+void Seller::displayInventory() const
 {
-	
-    int rid;
-    string text;
-    cout<<"\n-------Message--------\n";
-    cout << "Enter Reciever Id: ";
-    cin >> rid;
+    cout << "\nInventory of " << showroomName << "\n";
+    if (totalListings == 0)
+    {
+        cout << "No listings available.\n";
+        return;
+    }
 
-    cout << "Enter Your Message: ";
-    cin.ignore();
-    getline(cin, text);
-
-    Message *m = new Message(user.getUserId(), rid, text);
-    marketplace->addMessage(m);
-    cout << "Message Sent Successfully\n";
+    for (int i = 0; i < totalListings; i++)
+        inventory[i]->displayDetails();
 }
-// -------------Main----------------
 
+void Admin::approveListing(Listing &l)
+{
+    l.setStatus("Approved");
+    approvedCount++;
+}
+
+void Admin::removeListing(Listing &l)
+{
+    l.setStatus("Removed");
+    removedCount++;
+}
+
+// Friend function using private user contact data by design decision.
+bool canExchangePrivateContact(const Buyer &b, const Seller &s)
+{
+    return b.loggedIn && s.loggedIn && b.city == s.city;
+}
+
+class AuthInspector
+{
+public:
+    static void inspect(const User &u)
+    {
+        cout << "[AuthInspector] User " << u.name << " login state: " << (u.loggedIn ? "Online" : "Offline") << "\n";
+    }
+};
+
+// -------------------- Main --------------------
 int main()
 {
+    MarketPlace pakWheels;
 
-    MarketPlace PakWheels;
+    Seller *seller1 = new Seller(1, "Ali", "ali@gmail.com", "03001234567", "Karachi", "Ali Motors");
+    Buyer *buyer1 = new Buyer(2, "Ahmed", "ahmed@gmail.com", "03111234567", "Karachi", 5000000, "Toyota");
+    Admin *admin1 = new Admin(3, "Sara", "sara@gmail.com", "03221234567", "Lahore", 2);
+    SuperAdmin *super1 = new SuperAdmin(4, "Hassan", "hassan@gmail.com", "03331234567", "Islamabad");
+    Moderator *mod1 = new Moderator(5, "Mina", "mina@gmail.com", "03441234567", "Karachi", "Vehicle Moderation");
 
-    User *u1 = new User(1, "Ali", "ali@gmail.com", "03001234567", "Karachi");
-    User *u2 = new User(2, "Ahmed", "ahmed@gmail.com", "03111234567", "Lahore");
+    pakWheels += seller1;
+    pakWheels += buyer1;
+    pakWheels += admin1;
+    pakWheels += super1;
+    pakWheels += mod1;
 
-    PakWheels.addUser(u1);
-    PakWheels.addUser(u2);
-
-    Seller s1(*u1, "Ali Motors");
+    seller1->login();
+    buyer1->login();
+    AuthInspector::inspect(*seller1);
 
     Engine e1("E123", 180, 250, 2000, "Petrol");
+    Engine e2("E999", 100, 120, 1000, "Petrol");
+    Engine e3 = e1 + e2;
 
-    Location loc1("Pakistan", "Sindh", "Karachi", "lighthouse", 75300);
+    Location loc1("Pakistan", "Sindh", "Karachi", "Gulshan", 75300);
+    Location loc2("Pakistan", "Punjab", "Lahore", "Johar Town", 54000);
 
-    Car c1("Toyota", "Corolla", 2020, 4500000, 20000, "Automatic", e1, loc1);
+    // Using overloaded stream extraction through stringstream to avoid manual typing.
+    Location loc3;
+    stringstream locInput("Islamabad G-11 Federal Pakistan 44000");
+    locInput >> loc3;
 
-    s1.addlisting(101, c1, 4700000, &PakWheels);
+    seller1->addListing(101, new Car("KHI-101", "Toyota", "Corolla", 2020, 4500000, 20000, e1, loc1, false), 4700000, &pakWheels);
+    seller1->addListing(102, new Bike("KHI-404", "Honda", "CB150F", 2022, 450000, 9000, e2, loc2, true), 470000, &pakWheels);
+    seller1->addListing(103, new Truck("ISB-777", "Hino", "500 Series", 2019, 8000000, 50000, e3, loc3, 7000), 8200000, &pakWheels);
 
-    Listing *l = s1.getTotallisting() > 0 ? PakWheels.searchListingByid(101) : nullptr;
-    if (l == nullptr)
+    // Overloaded search functions in action.
+    pakWheels.search("Toyota");
+    pakWheels.search("Honda", "CB150F");
+    pakWheels.search(2018, 2023);
+    pakWheels.search(400000.0, 5000000.0);
+
+    Listing *found = pakWheels.searchByID(101);
+    if (found != nullptr)
     {
+        buyer1->addFavorite(found);
+        admin1->approveListing(*found);
+        AuditService::showInternalListingData(*found);
 
-        Listing *newListing = new Listing(101, c1, &s1, 4700000);
-        PakWheels.addListing(newListing);
+        Listing updated = *found + 200000;
+        cout << "\nAfter + operator on Listing: " << updated << "\n";
+
+        stringstream listingInput("5100000 Approved");
+        listingInput >> updated;
+        cout << "After >> operator on Listing: " << updated << "\n";
     }
 
-  
+    // Runtime polymorphism through base class pointer array.
+    Displayable *dashboard[4];
+    dashboard[0] = seller1;
+    dashboard[1] = buyer1;
+    dashboard[2] = admin1;
+    dashboard[3] = super1;
 
-    Buyer b1(*u2, 5000000, "Toyota");
+    cout << "\n=== User Dashboard (Polymorphism) ===\n";
+    for (int i = 0; i < 4; i++)
+        dashboard[i]->displayDetails();
 
-    PakWheels.searchBybrand("Toyota");
+    // More polymorphism using Vehicle base class pointers.
+    Vehicle *sampleFleet[3];
+    sampleFleet[0] = new Car("TMP-1", "Suzuki", "Swift", 2021, 3200000, 14000, e2, loc1, false);
+    sampleFleet[1] = new Bike("TMP-2", "Yamaha", "YBR", 2020, 350000, 19000, e2, loc2, false);
+    sampleFleet[2] = new Truck("TMP-3", "FAW", "Carrier", 2018, 6000000, 60000, e3, loc3, 5000);
 
-    Listing *found = PakWheels.searchListingByid(101);
-    if (found != nullptr)
-        b1.saveFavorite(found);
+    cout << "\n=== Vehicle Dashboard (Overriding) ===\n";
+    for (int i = 0; i < 3; i++)
+    {
+        sampleFleet[i]->displayDetails();
+        cout << "Road Tax: " << sampleFleet[i]->roadTax() << "\n";
+        delete sampleFleet[i];
+    }
 
-    b1.displayFavorites();
+    // Friend function usage.
+    cout << "\nCan Buyer and Seller exchange private contact? "
+         << (canExchangePrivateContact(*buyer1, *seller1) ? "Yes" : "No") << "\n";
 
-    Admin admin1(*u1, 2);
-    if (found != nullptr)
-        admin1.approvedlisting(*found);
+    // Message demo
+    Message *m1 = new Message(buyer1->getUserID(), seller1->getUserID(), "Is Corolla available?");
+    m1->displayDetails();
+    pakWheels.addMessage(m1);
 
-    admin1.generateReport();
-   	s1.updateSellerProfile();
-   
-    s1.setRating(2.3);
-   
-     
-     
-    Car c2(c1);
-    s1.addlisting(102,c2,3800000,&PakWheels);
-    s1.displaySellerListings();
-    PakWheels.displayAllListings();
-    
-	b1.sendMessage(&PakWheels);
+    // Operator demo from utility classes.
+    cout << "\nEngine 1 > Engine 2 ? " << (e1 > e2 ? "True" : "False") << "\n";
+    cout << "Location 1 == Location 2 ? " << (loc1 == loc2 ? "True" : "False") << "\n";
+    cout << "Merged Location (loc1 + loc2): " << (loc1 + loc2) << "\n";
+
+    Buyer upgradedBuyer = (*buyer1) + 1000000;
+    cout << "\nBuyer after + budget operator:\n";
+    upgradedBuyer.displayDetails();
+
+    seller1->displayInventory();
+    pakWheels.displayDetails();
 
     return 0;
 }
