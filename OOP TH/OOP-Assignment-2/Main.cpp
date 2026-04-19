@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
-#include <sstream>
+// Abstract & Interface classes
+#include "Displayable.h"
+#include "Searchable.h"
+#include "Billable.h"
+#include "PersonBase.h"
 
 using namespace std;
 
@@ -9,45 +13,7 @@ class Seller;
 class Buyer;
 class MarketPlace;
 
-// -------------------- Abstract Interfaces (Normally Header Files) --------------------
-class Displayable
-{
-public:
-    virtual void displayDetails() const = 0;
-    virtual ~Displayable() {}
-};
-
-class Searchable
-{
-public:
-    virtual bool matchesKeyword(const string &keyword) const = 0;
-    virtual ~Searchable() {}
-};
-
-class Billable
-{
-public:
-    virtual double finalAmount() const = 0;
-    virtual ~Billable() {}
-};
-
-class PersonBase
-{
-protected:
-    int userID;
-    string name;
-
-public:
-    PersonBase() : userID(0), name("Unknown") {}
-    PersonBase(int id, const string &n) : userID(id), name(n) {}
-
-    virtual void viewProfile() const = 0;
-    virtual void updateProfile() = 0;
-
-    virtual ~PersonBase() {}
-};
-
-// -------------------- Utility Classes --------------------
+// -------------------- Location Class--------------------
 class Location
 {
 private:
@@ -68,7 +34,7 @@ public:
     string getCountry() const { return country; }
     int getZipCode() const { return zipcode; }
 
-    // Operator Overloading (member)
+    // Operator Overloading
     bool operator==(const Location &other) const
     {
         return city == other.city && area == other.area && zipcode == other.zipcode;
@@ -81,14 +47,15 @@ public:
 
     Location operator+(const Location &other) const
     {
-        // Simple merge style object: city from left, area from right.
         Location merged = *this;
         merged.area = other.area;
         return merged;
     }
 
-    // Friend stream operators (global)
+    // Friend stream operators
+    // Overloading '<<' so we can directly print our custom objects using cout.
     friend ostream &operator<<(ostream &out, const Location &loc);
+    // Overloading '>>' to allow reading directly from input stream using cin.
     friend istream &operator>>(istream &in, Location &loc);
 };
 
@@ -104,6 +71,7 @@ istream &operator>>(istream &in, Location &loc)
     return in;
 }
 
+// -------------------- Engine Class--------------------
 class Engine
 {
 private:
@@ -126,7 +94,7 @@ public:
         return (double)(horsePower + torque) / capacity;
     }
 
-    // Operator Overloading (member)
+    // Operator Overloading
     bool operator>(const Engine &other) const
     {
         return horsePower > other.horsePower;
@@ -173,6 +141,9 @@ public:
 
     Vehicle(string r, string b, string m, int y, double p, float mil, Engine e, Location loc)
         : regNo(r), brand(b), model(m), year(y), basePrice(p), mileage(mil), engine(e), location(loc) {}
+    /*  This forces every child class
+     (like Car or Bike) to write its own logic for road tax,
+     since the rate is different for each.*/
 
     virtual double roadTax() const = 0;
     virtual string getType() const = 0;
@@ -184,7 +155,7 @@ public:
     double getPrice() const { return basePrice; }
     float getMileage() const { return mileage; }
 
-    // Operator Overloading (member)
+    // Operator Overloading
     bool operator<(const Vehicle &other) const
     {
         return basePrice < other.basePrice;
@@ -195,7 +166,7 @@ public:
         return regNo == other.regNo;
     }
 
-    // Common searchable behavior for all vehicle types.
+    // searchable behavior for all vehicle types.
     bool matchesKeyword(const string &keyword) const
     {
         return brand == keyword || model == keyword || regNo == keyword;
@@ -364,7 +335,7 @@ public:
         viewProfile();
     }
 
-    // Operator overloading (member)
+    // Operator overloading
     bool operator==(const User &other) const
     {
         return userID == other.userID;
@@ -406,7 +377,9 @@ public:
 
     double getBudget() const { return budget; }
 
-    // Function overloading
+    /*Function overloading
+      This is done to set the preference
+      of a buyer to a certain brand*/
     void setPreference(const string &brand)
     {
         preferredBrand = brand;
@@ -420,7 +393,7 @@ public:
 
     void addFavorite(Listing *l);
 
-    // Operator overloading (member)
+    // Operator overloading
     Buyer operator+(double extraBudget) const
     {
         Buyer temp = *this;
@@ -546,7 +519,7 @@ public:
 class Message : public Displayable
 {
 private:
-    int messageID;
+    const int messageID;
     int senderID;
     int receiverID;
     string text;
@@ -584,7 +557,7 @@ class AuditService;
 class Listing : public Displayable, public Billable
 {
 private:
-    int listingID;
+    const int listingID;
     Vehicle *vehicle;
     Seller *seller;
     double askingPrice;
@@ -598,7 +571,10 @@ public:
 
     Listing(int id, Vehicle *v, Seller *s, double ask)
         : listingID(id), vehicle(v), seller(s), askingPrice(ask), status("Pending"), postDate("Today"), platformFeeRate(0.04) {}
-
+    /* Copy constructor is necessary here to perform
+      a deep copy of the Vehicle pointer,
+      preventing memory leak
+    */
     Listing(const Listing &other)
         : listingID(other.listingID),
           vehicle(other.vehicle != nullptr ? other.vehicle->clone() : nullptr),
@@ -630,13 +606,15 @@ public:
     void setStatus(const string &st) { status = st; }
     void setAskPrice(double p) { askingPrice = p; }
 
-    // Billable override
+    /* Billable override
+     Used to calculate the final amount
+    */
     double finalAmount() const
     {
         return askingPrice + askingPrice * platformFeeRate;
     }
 
-    // Operator Overloading (member)
+    // Operator Overloading
     bool operator==(const Listing &other) const
     {
         return listingID == other.listingID;
@@ -646,6 +624,8 @@ public:
     {
         return askingPrice < other.askingPrice;
     }
+    /* This increases the price
+      of a listing just by using the '+'*/
 
     Listing operator+(double increment) const
     {
@@ -749,7 +729,7 @@ public:
         return nullptr;
     }
 
-    // Function Overloading (compile-time polymorphism)
+    // Function Overloading
     void search(const string &brand) const
     {
         cout << "\nSearch by brand: " << brand << "\n";
@@ -766,6 +746,9 @@ public:
         if (!found)
             cout << "No listing found.\n";
     }
+    /*Function Overloading: Gives us multiple ways
+    to search (by year, by brand, etc.) using the
+    exact same function name for convenience.*/
 
     void search(const string &brand, const string &model) const
     {
@@ -808,7 +791,8 @@ public:
         }
     }
 
-    // Operator Overloading (member)
+    // Operator Overloading
+
     MarketPlace &operator+=(User *u)
     {
         addUser(u);
@@ -891,7 +875,10 @@ void Admin::removeListing(Listing &l)
     removedCount++;
 }
 
-// Friend function using private user contact data by design decision.
+/* Friend Function: This needs to be a friend because
+ it needs to peek into the private variables (like 'loggedIn')
+of both Buyer and Seller at the same time.
+*/
 bool canExchangePrivateContact(const Buyer &b, const Seller &s)
 {
     return b.loggedIn && s.loggedIn && b.city == s.city;
@@ -911,11 +898,11 @@ int main()
 {
     MarketPlace pakWheels;
 
-    Seller *seller1 = new Seller(1, "Ali", "ali@gmail.com", "03001234567", "Karachi", "Ali Motors");
-    Buyer *buyer1 = new Buyer(2, "Ahmed", "ahmed@gmail.com", "03111234567", "Karachi", 5000000, "Toyota");
-    Admin *admin1 = new Admin(3, "Sara", "sara@gmail.com", "03221234567", "Lahore", 2);
-    SuperAdmin *super1 = new SuperAdmin(4, "Hassan", "hassan@gmail.com", "03331234567", "Islamabad");
-    Moderator *mod1 = new Moderator(5, "Mina", "mina@gmail.com", "03441234567", "Karachi", "Vehicle Moderation");
+    Seller *seller1 = new Seller(1, "Ali", "ali@gmail.com", "03008888888", "Karachi", "Ali Motors");
+    Buyer *buyer1 = new Buyer(2, "Ahmed", "ahmed@gmail.com", "03111237897", "Karachi", 5000000, "Toyota");
+    Admin *admin1 = new Admin(3, "Sara", "sara@gmail.com", "03221239876", "Lahore", 2);
+    SuperAdmin *super1 = new SuperAdmin(4, "Hassan", "hassan@gmail.com", "03334567897", "Islamabad");
+    Moderator *mod1 = new Moderator(5, "Mina", "mina@gmail.com", "03446574321", "Karachi", "Vehicle Moderation");
 
     pakWheels += seller1;
     pakWheels += buyer1;
@@ -934,16 +921,16 @@ int main()
     Location loc1("Pakistan", "Sindh", "Karachi", "Gulshan", 75300);
     Location loc2("Pakistan", "Punjab", "Lahore", "Johar Town", 54000);
 
-    // Using overloaded stream extraction through stringstream to avoid manual typing.
+    // overloaded stream extraction
     Location loc3;
-    stringstream locInput("Islamabad G-11 Federal Pakistan 44000");
-    locInput >> loc3;
+    cout << "\nEnter Location details (City Area Province Country Zipcode): ";
+    cin >> loc3;
 
     seller1->addListing(101, new Car("KHI-101", "Toyota", "Corolla", 2020, 4500000, 20000, e1, loc1, false), 4700000, &pakWheels);
     seller1->addListing(102, new Bike("KHI-404", "Honda", "CB150F", 2022, 450000, 9000, e2, loc2, true), 470000, &pakWheels);
     seller1->addListing(103, new Truck("ISB-777", "Hino", "500 Series", 2019, 8000000, 50000, e3, loc3, 7000), 8200000, &pakWheels);
 
-    // Overloaded search functions in action.
+    // Search Overloading
     pakWheels.search("Toyota");
     pakWheels.search("Honda", "CB150F");
     pakWheels.search(2018, 2023);
@@ -959,29 +946,29 @@ int main()
         Listing updated = *found + 200000;
         cout << "\nAfter + operator on Listing: " << updated << "\n";
 
-        stringstream listingInput("5100000 Approved");
-        listingInput >> updated;
+        cout << "\nEnter updated Listing details (Price Status): ";
+        cin >> updated;
         cout << "After >> operator on Listing: " << updated << "\n";
     }
 
-    // Runtime polymorphism through base class pointer array.
+    // Polymorphism through base class pointer array.
     Displayable *dashboard[4];
     dashboard[0] = seller1;
     dashboard[1] = buyer1;
     dashboard[2] = admin1;
     dashboard[3] = super1;
 
-    cout << "\n=== User Dashboard (Polymorphism) ===\n";
+    cout << "\n=== User Dashboard ===\n";
     for (int i = 0; i < 4; i++)
         dashboard[i]->displayDetails();
 
-    // More polymorphism using Vehicle base class pointers.
+    // Polymorphism using Vehicle base class pointers.
     Vehicle *sampleFleet[3];
     sampleFleet[0] = new Car("TMP-1", "Suzuki", "Swift", 2021, 3200000, 14000, e2, loc1, false);
     sampleFleet[1] = new Bike("TMP-2", "Yamaha", "YBR", 2020, 350000, 19000, e2, loc2, false);
     sampleFleet[2] = new Truck("TMP-3", "FAW", "Carrier", 2018, 6000000, 60000, e3, loc3, 5000);
 
-    cout << "\n=== Vehicle Dashboard (Overriding) ===\n";
+    cout << "\n=== Vehicle Dashboard ===\n";
     for (int i = 0; i < 3; i++)
     {
         sampleFleet[i]->displayDetails();
@@ -989,16 +976,16 @@ int main()
         delete sampleFleet[i];
     }
 
-    // Friend function usage.
+    // Friend Function
     cout << "\nCan Buyer and Seller exchange private contact? "
          << (canExchangePrivateContact(*buyer1, *seller1) ? "Yes" : "No") << "\n";
 
-    // Message demo
+    // Message
     Message *m1 = new Message(buyer1->getUserID(), seller1->getUserID(), "Is Corolla available?");
     m1->displayDetails();
     pakWheels.addMessage(m1);
 
-    // Operator demo from utility classes.
+    // Operator Overloading
     cout << "\nEngine 1 > Engine 2 ? " << (e1 > e2 ? "True" : "False") << "\n";
     cout << "Location 1 == Location 2 ? " << (loc1 == loc2 ? "True" : "False") << "\n";
     cout << "Merged Location (loc1 + loc2): " << (loc1 + loc2) << "\n";
